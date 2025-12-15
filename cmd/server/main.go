@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -13,6 +14,7 @@ import (
 )
 
 func main(cfg *config.Config) {
+	printBanner()
 	server := tcp.NewServer(
 		tcp.WithCfg(mapToSrvCfg(&cfg.Server)),
 	)
@@ -54,6 +56,23 @@ func mapToSrvCfg(cfg *config.ServerConfig) tcp.SrvCfg {
 		MaxConnections:  cfg.Limits.MaxConnectionsSize,
 		MaxMessageSize:  cfg.Limits.MaxMessageSize,
 	}
+}
+
+func printBanner() {
+	fmt.Println(`
+	_____                          
+	/ ____|                         
+	| (___   ___ _ ____   _____ _ __ 
+	\___ \ / _ \ '__\ \ / / _ \ '__|
+	____) |  __/ |   \ V /  __/ |   
+	|_____/ \___|_|    \_/ \___|_|   
+
+	━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+	Author : Arash Alaei
+	GitHub : github.com/arashalaei
+	Version: 1.0.0
+	━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+	`)
 }
 
 func Register(root *cobra.Command) {

@@ -11,3 +11,18 @@ server:
   limits:
     max_connections_size: 1000
     max_message_size: 1048576 # 1MB
+
+client:
+  network: tcp
+  address: localhost:8080
+
+  timeouts:
+    read: 30s
+    write: 30s
+    connect: 10s
+    keep_alive_period: 30s
+
+    limits:
+      max_retries: 3
+      retry_delay: 1s
+      keep_alive: true

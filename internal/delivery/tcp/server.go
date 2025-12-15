@@ -80,6 +80,7 @@ func NewServer(ops ...srvops) IServer {
 		// default logger
 		logger:    log.New(os.Stdout, "[TCP Server]", log.LstdFlags),
 		connCount: make(chan struct{}, 1000),
+		handlers:  make(map[RequestType]RequestHandler),
 		wg:        sync.WaitGroup{},
 		mu:        sync.RWMutex{},
 	}

@@ -8,25 +8,46 @@ import (
 
 type Config struct {
 	Server ServerConfig `mapstructure:"server"`
+	Client ClientConfig `mapstructure:"client"`
 }
 
 type ServerConfig struct {
-	Network  string        `mapstructure:"network"`
-	Address  string        `mapstructure:"address"`
-	Timeouts TimeoutConfig `mapstructure:"timeouts"`
-	Limits   LimitConfig   `mapstructure:"limits"`
+	Network  string           `mapstructure:"network"`
+	Address  string           `mapstructure:"address"`
+	Timeouts SrvTimeoutConfig `mapstructure:"timeouts"`
+	Limits   SrvLimitConfig   `mapstructure:"limits"`
 }
 
-type TimeoutConfig struct {
+type SrvTimeoutConfig struct {
 	Read     time.Duration `mapstructure:"read"`
 	Write    time.Duration `mapstructure:"write"`
 	Idle     time.Duration `mapstructure:"idle"`
 	Shutdown time.Duration `mapstructure:"shutdown"`
 }
 
-type LimitConfig struct {
+type SrvLimitConfig struct {
 	MaxConnectionsSize int   `mapstructure:"max_connections_size"`
 	MaxMessageSize     int64 `mapstructure:"max_message_size"`
+}
+
+type ClientConfig struct {
+	Network  string              `mapstructure:"network"`
+	Address  string              `mapstructure:"address"`
+	Timeouts ClinetTimeoutConfig `mapstructure:"timeouts"`
+	Limits   ClientLimitConfig   `mapstructure:"limits"`
+}
+
+type ClinetTimeoutConfig struct {
+	Read            time.Duration `mapstructure:"read"`
+	Write           time.Duration `mapstructure:"write"`
+	Connect         time.Duration `mapstructure:"connect"`
+	KeepAlivePeriod time.Duration `mapstructure:"keep_alive_period"`
+}
+
+type ClientLimitConfig struct {
+	MaxRetries int           `mapstructure:"max_retries"`
+	RetryDelay time.Duration `mapstructure:"retry_delay"`
+	KeepAlive  bool          `mapstructure:"keep_alive"`
 }
 
 func Load(path string) (*Config, error) {
