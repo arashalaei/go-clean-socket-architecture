@@ -1,0 +1,13 @@
+server:
+  network: tcp
+  address: :8080
+
+  timeouts:
+    read: 30s
+    write: 30s
+    idle: 30s
+    shutdown: 30s
+
+  limits:
+    max_connections_size: 1000
+    max_message_size: 1048576 # 1MB
