@@ -7,4 +7,5 @@ import (
 type PersonRepositroy interface {
 	CreatePerson(person *entity.Person) uint
 	GetPersonByID(personId uint) (*entity.Person, error)
+	GetAllPersons() (*[]entity.Person, error)
 }

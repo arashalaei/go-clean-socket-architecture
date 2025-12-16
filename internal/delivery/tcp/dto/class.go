@@ -8,6 +8,12 @@ type Class struct {
 	Students []Person `json:"students,omitempty"`
 }
 
+type CreateClassReq struct {
+	Name      string `json:"name,omitempty"`
+	SchoolId  uint   `json:"school_id,omitempty"`
+	TeacherId uint   `json:"teacher_id,omitempty"`
+}
+
 type AddStudentToClassReq struct {
 	StudentId uint `json:"student_id,omitempty"`
 	ClassId   uint `json:"class_id,omitempty"`

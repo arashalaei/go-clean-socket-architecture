@@ -10,6 +10,8 @@ import (
 
 	"github.com/arashalaei/go-clean-socket-architecture/internal/delivery/tcp"
 	store "github.com/arashalaei/go-clean-socket-architecture/internal/repository/sqlite"
+	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/class"
+	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/person"
 	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/school"
 	"github.com/arashalaei/go-clean-socket-architecture/pkg/config"
 	"github.com/spf13/cobra"
@@ -23,14 +25,29 @@ func main(cfg *config.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// school usecases
 	schoolUsecases := school.NewSchoolUseCases(
 		school.NewCreateSchoolUseCase(db),
+		school.NewListSchoolsUseCase(db),
+	)
+
+	classUsecases := class.NewClassUseCases(
+		class.NewCreateClassUseCase(db),
+		class.NewListClassesUseCase(db),
+		class.NewAddStudentToClassUseCase(db),
+	)
+
+	personUsecases := person.NewPersonUseCases(
+		person.NewCreatePersonUseCase(db),
+		person.NewListPersonsUseCase(db),
+		person.NewWhoAmIUseCase(db),
+		person.NewEnrollInSchoolStudentUseCase(db, db),
 	)
 
 	server := tcp.NewServer(
 		tcp.WithCfg(mapToSrvCfg(&cfg.Server)),
 		tcp.WithSchoolUsecases(*schoolUsecases),
+		tcp.WithClassUsecases(*classUsecases),
+		tcp.WithPersonUsecases(*personUsecases),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -44,10 +61,13 @@ func main(cfg *config.Config) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	// Register handlers
 	server.RegisterHandler(tcp.CreateSchool, server.CreateSchoolHandler)
-	server.RegisterHandler(tcp.CreateClass, server.CreateClassHandler)
+	server.RegisterHandler(tcp.ListSchools, server.ListSchoolsHandler)
 	server.RegisterHandler(tcp.CreatePerson, server.CreatePersonHandler)
+	server.RegisterHandler(tcp.ListPersons, server.ListPersonsHandler)
+	server.RegisterHandler(tcp.CreateClass, server.CreateClassHandler)
+	server.RegisterHandler(tcp.ListClasses, server.ListClassesHandler)
+	server.RegisterHandler(tcp.AddStudentToClass, server.AddStudentToClassHandler)
 	server.RegisterHandler(tcp.WhoAmI, server.WhoAmIHandler)
 
 	<-stop

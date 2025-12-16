@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/arashalaei/go-clean-socket-architecture/internal/delivery/tcp/dto"
+	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/class"
+	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/person"
 	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/school"
 )
 
@@ -25,8 +27,12 @@ type IServer interface {
 
 type ServerHandlers interface {
 	CreateSchoolHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
+	ListSchoolsHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
 	CreatePersonHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
+	ListPersonsHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
 	CreateClassHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
+	ListClassesHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
+	AddStudentToClassHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
 	WhoAmIHandler(ctx context.Context, payload json.RawMessage) (interface{}, error)
 }
 
@@ -44,10 +50,14 @@ type SrvCfg struct {
 type RequestType string
 
 const (
-	CreateSchool RequestType = "creat_school"
-	CreatePerson RequestType = "creat_person"
-	CreateClass  RequestType = "creat_class"
-	WhoAmI       RequestType = "who_am_i"
+	CreateSchool       RequestType = "creat_school"
+	ListSchools        RequestType = "list_schools"
+	CreatePerson       RequestType = "creat_person"
+	ListPersons        RequestType = "list_persons"
+	CreateClass        RequestType = "creat_class"
+	ListClasses        RequestType = "list_classes"
+	AddStudentToClass  RequestType = "add_student_to_class"
+	WhoAmI             RequestType = "who_am_i"
 )
 
 type server struct {
@@ -62,8 +72,9 @@ type server struct {
 	wg          sync.WaitGroup
 	mu          sync.RWMutex
 
-	// use cases
 	schoolUsecases *school.SchoolUsecases
+	classUsecases  *class.ClassUsecases
+	personUsecases *person.PersonUsecases
 }
 
 type RequestHandler func(ctx context.Context, payload json.RawMessage) (interface{}, error)
@@ -114,6 +125,18 @@ func WithLogger(l log.Logger) srvops {
 func WithSchoolUsecases(su school.SchoolUsecases) srvops {
 	return func(s *server) {
 		s.schoolUsecases = &su
+	}
+}
+
+func WithClassUsecases(cu class.ClassUsecases) srvops {
+	return func(s *server) {
+		s.classUsecases = &cu
+	}
+}
+
+func WithPersonUsecases(pu person.PersonUsecases) srvops {
+	return func(s *server) {
+		s.personUsecases = &pu
 	}
 }
 

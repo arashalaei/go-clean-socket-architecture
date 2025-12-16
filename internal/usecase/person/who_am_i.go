@@ -1,24 +1,23 @@
 package person
 
-// Application Layer (Application Business Rules)
-
 import (
 	"github.com/arashalaei/go-clean-socket-architecture/internal/domain/entity"
 	"github.com/arashalaei/go-clean-socket-architecture/internal/domain/repository"
 )
 
-type CreatePersonUseCase struct {
+type WhoAmIUseCase struct {
 	personRepo repository.PersonRepositroy
 }
 
-func NewCreatePersonUseCase(
+func NewWhoAmIUseCase(
 	personRepo repository.PersonRepositroy,
-) *CreatePersonUseCase {
-	return &CreatePersonUseCase{
+) *WhoAmIUseCase {
+	return &WhoAmIUseCase{
 		personRepo: personRepo,
 	}
 }
 
-func (uc *CreatePersonUseCase) Execute(p entity.Person) uint {
-	return uc.personRepo.CreatePerson(&p)
+func (uc *WhoAmIUseCase) Execute(personId uint) (*entity.Person, error) {
+	return uc.personRepo.GetPersonByID(personId)
 }
+

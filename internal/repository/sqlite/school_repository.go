@@ -40,3 +40,13 @@ func (s *sqlit) GetSchoolByName(schoolName string) (*entity.School, error) {
 	}
 	return mapper.SchoolToEntity(&school), nil
 }
+
+func (s *sqlit) GetAllSchools() (*[]entity.School, error) {
+	var schools []model.School
+
+	if err := s.db.Find(&schools).Error; err != nil {
+		return nil, fmt.Errorf("failed to get schools: %w", err)
+	}
+
+	return mapper.SchoolsToEntities(schools), nil
+}

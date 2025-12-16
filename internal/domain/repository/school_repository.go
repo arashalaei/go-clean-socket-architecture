@@ -6,4 +6,5 @@ type SchoolRepository interface {
 	CreateSchool(name string) uint
 	GetSchoolByID(id uint) (*entity.School, error)
 	GetSchoolByName(schoolName string) (*entity.School, error)
+	GetAllSchools() (*[]entity.School, error)
 }

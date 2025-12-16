@@ -3,10 +3,12 @@ package client
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -31,7 +33,6 @@ func client(cfg *config.Config) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	// Run menu in a goroutine so we can handle shutdown signals
 	go func() {
 		runMainMenu(client)
 	}()
@@ -196,31 +197,281 @@ func handleCreateSchool(client *tcp.Client) {
 }
 
 func handleListSchools(client *tcp.Client) {
-	fmt.Println("not yet implemented")
+	res, err := client.Send(
+		context.Background(),
+		tcp.ListSchools, "")
+	if err != nil {
+		fmt.Printf("Error listing schools: %v\n", err)
+		return
+	}
+
+	dataBytes, err := json.Marshal(res.Data)
+	if err != nil {
+		fmt.Printf("Error parsing schools data: %v\n", err)
+		return
+	}
+
+	var schools []struct {
+		Id   uint   `json:"Id"`
+		Name string `json:"Name"`
+	}
+
+	if err := json.Unmarshal(dataBytes, &schools); err != nil {
+		fmt.Printf("Error unmarshaling schools: %v\n", err)
+		return
+	}
+
+	if len(schools) == 0 {
+		fmt.Println("No schools found.")
+		return
+	}
+
+	printSchoolsTable(schools)
 }
 
 func handleCreateClass(client *tcp.Client) {
-	fmt.Println("not yet implemented")
+	scanner := bufio.NewScanner(os.Stdin)
+
+	fmt.Println("Enter the class name:")
+	scanner.Scan()
+	name := strings.TrimSpace(scanner.Text())
+	if name == "" {
+		fmt.Println("Class name cannot be empty")
+		return
+	}
+
+	fmt.Println("Enter the school ID:")
+	scanner.Scan()
+	schoolIdStr := strings.TrimSpace(scanner.Text())
+	schoolId, err := strconv.ParseUint(schoolIdStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Invalid school ID: %v\n", err)
+		return
+	}
+
+	fmt.Println("Enter the teacher ID:")
+	scanner.Scan()
+	teacherIdStr := strings.TrimSpace(scanner.Text())
+	teacherId, err := strconv.ParseUint(teacherIdStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Invalid teacher ID: %v\n", err)
+		return
+	}
+
+	res, err := client.Send(
+		context.Background(),
+		tcp.CreateClass,
+		dto.CreateClassReq{
+			Name:      name,
+			SchoolId:  uint(schoolId),
+			TeacherId: uint(teacherId),
+		},
+	)
+	if err != nil {
+		fmt.Printf("Error creating class: %v\n", err)
+		return
+	}
+	fmt.Printf("Class created successfully: %+v\n", res.Data)
 }
 
 func handleListClasses(client *tcp.Client) {
-	fmt.Println("not yet implemented")
+	res, err := client.Send(
+		context.Background(),
+		tcp.ListClasses, "")
+	if err != nil {
+		fmt.Printf("Error listing classes: %v\n", err)
+		return
+	}
+
+	dataBytes, err := json.Marshal(res.Data)
+	if err != nil {
+		fmt.Printf("Error parsing classes data: %v\n", err)
+		return
+	}
+
+	var classes []struct {
+		Id       uint   `json:"Id"`
+		Name     string `json:"Name"`
+		SchoolId uint   `json:"SchoolId"`
+	}
+
+	if err := json.Unmarshal(dataBytes, &classes); err != nil {
+		fmt.Printf("Error unmarshaling classes: %v\n", err)
+		return
+	}
+
+	if len(classes) == 0 {
+		fmt.Println("No classes found.")
+		return
+	}
+
+	printClassesTable(classes)
 }
 
 func handleAddStudentToClass(client *tcp.Client) {
-	fmt.Println("not yet implemented")
+	scanner := bufio.NewScanner(os.Stdin)
+
+	fmt.Println("Enter the class ID:")
+	scanner.Scan()
+	classIdStr := strings.TrimSpace(scanner.Text())
+	classId, err := strconv.ParseUint(classIdStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Invalid class ID: %v\n", err)
+		return
+	}
+
+	fmt.Println("Enter the student ID:")
+	scanner.Scan()
+	studentIdStr := strings.TrimSpace(scanner.Text())
+	studentId, err := strconv.ParseUint(studentIdStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Invalid student ID: %v\n", err)
+		return
+	}
+
+	res, err := client.Send(
+		context.Background(),
+		tcp.AddStudentToClass,
+		dto.AddStudentToClassReq{
+			ClassId:   uint(classId),
+			StudentId: uint(studentId),
+		},
+	)
+	if err != nil {
+		fmt.Printf("Error adding student to class: %v\n", err)
+		return
+	}
+	fmt.Printf("%v\n", res.Data)
 }
 
 func handleCreatePerson(client *tcp.Client) {
-	fmt.Println("not yet implemented")
+	scanner := bufio.NewScanner(os.Stdin)
+
+	fmt.Println("Enter the person name:")
+	scanner.Scan()
+	name := strings.TrimSpace(scanner.Text())
+	if name == "" {
+		fmt.Println("Person name cannot be empty")
+		return
+	}
+
+	fmt.Println("Enter the role (student/teacher):")
+	scanner.Scan()
+	role := strings.TrimSpace(scanner.Text())
+	if role != "student" && role != "teacher" {
+		fmt.Println("Role must be 'student' or 'teacher'")
+		return
+	}
+
+	fmt.Println("Enter the school ID:")
+	scanner.Scan()
+	schoolIdStr := strings.TrimSpace(scanner.Text())
+	schoolId, err := strconv.ParseUint(schoolIdStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Invalid school ID: %v\n", err)
+		return
+	}
+
+	res, err := client.Send(
+		context.Background(),
+		tcp.CreatePerson,
+		dto.CreatePersonReq{
+			Name:     name,
+			Role:     role,
+			SchoolId: uint(schoolId),
+		},
+	)
+	if err != nil {
+		fmt.Printf("Error creating person: %v\n", err)
+		return
+	}
+	fmt.Printf("Person created successfully: %+v\n", res.Data)
 }
 
 func handleListPersons(client *tcp.Client) {
-	fmt.Println("not yet implemented")
+	res, err := client.Send(
+		context.Background(),
+		tcp.ListPersons, "")
+	if err != nil {
+		fmt.Printf("Error listing persons: %v\n", err)
+		return
+	}
+
+	dataBytes, err := json.Marshal(res.Data)
+	if err != nil {
+		fmt.Printf("Error parsing persons data: %v\n", err)
+		return
+	}
+
+	var persons []struct {
+		Id     uint   `json:"Id"`
+		Name   string `json:"Name"`
+		Role   string `json:"Role"`
+		School struct {
+			Id   uint   `json:"Id"`
+			Name string `json:"Name"`
+		} `json:"School"`
+	}
+
+	if err := json.Unmarshal(dataBytes, &persons); err != nil {
+		fmt.Printf("Error unmarshaling persons: %v\n", err)
+		return
+	}
+
+	if len(persons) == 0 {
+		fmt.Println("No persons found.")
+		return
+	}
+
+	printPersonsTable(persons)
 }
 
 func handleWhoAmI(client *tcp.Client) {
-	fmt.Println("not yet implemented")
+	scanner := bufio.NewScanner(os.Stdin)
+
+	fmt.Println("Enter the person ID:")
+	scanner.Scan()
+	personIdStr := strings.TrimSpace(scanner.Text())
+	personId, err := strconv.ParseUint(personIdStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Invalid person ID: %v\n", err)
+		return
+	}
+
+	res, err := client.Send(
+		context.Background(),
+		tcp.WhoAmI,
+		dto.WhoAmIReq{
+			PersonId: uint(personId),
+		},
+	)
+	if err != nil {
+		fmt.Printf("Error getting person info: %v\n", err)
+		return
+	}
+
+	dataBytes, err := json.Marshal(res.Data)
+	if err != nil {
+		fmt.Printf("Error parsing person data: %v\n", err)
+		return
+	}
+
+	var person struct {
+		Id     uint   `json:"Id"`
+		Name   string `json:"Name"`
+		Role   string `json:"Role"`
+		School struct {
+			Id   uint   `json:"Id"`
+			Name string `json:"Name"`
+		} `json:"School"`
+	}
+
+	if err := json.Unmarshal(dataBytes, &person); err != nil {
+		fmt.Printf("Error unmarshaling person: %v\n", err)
+		return
+	}
+
+	printPersonDetails(person)
 }
 
 func mapToClientCfg(cfg *config.ClientConfig) tcp.ClientConfig {
@@ -235,6 +486,94 @@ func mapToClientCfg(cfg *config.ClientConfig) tcp.ClientConfig {
 		MaxRetries:      cfg.Limits.MaxRetries,
 		RetryDelay:      cfg.Limits.RetryDelay,
 	}
+}
+
+func printSchoolsTable(schools []struct {
+	Id   uint   `json:"Id"`
+	Name string `json:"Name"`
+}) {
+	fmt.Println("\n┌─────┬────────────────────────────────────────┐")
+	fmt.Printf("│ %-3s │ %-38s │\n", "ID", "Name")
+	fmt.Println("├─────┼────────────────────────────────────────┤")
+
+	for _, school := range schools {
+		name := school.Name
+		if len(name) > 38 {
+			name = name[:35] + "..."
+		}
+		fmt.Printf("│ %-3d │ %-38s │\n", school.Id, name)
+	}
+
+	fmt.Println("└─────┴────────────────────────────────────────┘")
+	fmt.Printf("\nTotal: %d school(s)\n\n", len(schools))
+}
+
+func printClassesTable(classes []struct {
+	Id       uint   `json:"Id"`
+	Name     string `json:"Name"`
+	SchoolId uint   `json:"SchoolId"`
+}) {
+	fmt.Println("\n┌─────┬────────────────────────────────────────┬──────────┐")
+	fmt.Printf("│ %-3s │ %-38s │ %-8s │\n", "ID", "Name", "SchoolID")
+	fmt.Println("├─────┼────────────────────────────────────────┼──────────┤")
+
+	for _, class := range classes {
+		name := class.Name
+		if len(name) > 38 {
+			name = name[:35] + "..."
+		}
+		fmt.Printf("│ %-3d │ %-38s │ %-8d │\n", class.Id, name, class.SchoolId)
+	}
+
+	fmt.Println("└─────┴────────────────────────────────────────┴──────────┘")
+	fmt.Printf("\nTotal: %d class(es)\n\n", len(classes))
+}
+
+func printPersonsTable(persons []struct {
+	Id     uint   `json:"Id"`
+	Name   string `json:"Name"`
+	Role   string `json:"Role"`
+	School struct {
+		Id   uint   `json:"Id"`
+		Name string `json:"Name"`
+	} `json:"School"`
+}) {
+	fmt.Println("\n┌─────┬────────────────────────────────────────┬──────────┬────────────────────────────────────────┐")
+	fmt.Printf("│ %-3s │ %-38s │ %-8s │ %-38s │\n", "ID", "Name", "Role", "School")
+	fmt.Println("├─────┼────────────────────────────────────────┼──────────┼────────────────────────────────────────┤")
+
+	for _, person := range persons {
+		name := person.Name
+		if len(name) > 38 {
+			name = name[:35] + "..."
+		}
+		schoolName := person.School.Name
+		if len(schoolName) > 38 {
+			schoolName = schoolName[:35] + "..."
+		}
+		fmt.Printf("│ %-3d │ %-38s │ %-8s │ %-38s │\n", person.Id, name, person.Role, schoolName)
+	}
+
+	fmt.Println("└─────┴────────────────────────────────────────┴──────────┴────────────────────────────────────────┘")
+	fmt.Printf("\nTotal: %d person(s)\n\n", len(persons))
+}
+
+func printPersonDetails(person struct {
+	Id     uint   `json:"Id"`
+	Name   string `json:"Name"`
+	Role   string `json:"Role"`
+	School struct {
+		Id   uint   `json:"Id"`
+		Name string `json:"Name"`
+	} `json:"School"`
+}) {
+	fmt.Println("\n┌──────────────────────────────────────────────────────────┐")
+	fmt.Printf("│ ID:     %-50d │\n", person.Id)
+	fmt.Printf("│ Name:   %-50s │\n", person.Name)
+	fmt.Printf("│ Role:   %-50s │\n", person.Role)
+	fmt.Printf("│ School: %-50s │\n", person.School.Name)
+	fmt.Println("└──────────────────────────────────────────────────────────┘")
+	fmt.Println()
 }
 
 func printBanner() {

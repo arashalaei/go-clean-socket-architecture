@@ -15,3 +15,13 @@ func SchoolToEntity(s *model.School) *entity.School {
 		Name: s.Name,
 	}
 }
+
+func SchoolsToEntities(schools []model.School) *[]entity.School {
+	var schoolToEntities []entity.School
+
+	for _, s := range schools {
+		schoolToEntities = append(schoolToEntities, *SchoolToEntity(&s))
+	}
+
+	return &schoolToEntities
+}

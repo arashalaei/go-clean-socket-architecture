@@ -13,6 +13,7 @@ import (
 type IStore interface {
 	repository.PersonRepositroy
 	repository.SchoolRepository
+	repository.ClassRepository
 }
 
 type sqlit struct {
