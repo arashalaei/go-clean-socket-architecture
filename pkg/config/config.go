@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig `mapstructure:"server"`
-	Client ClientConfig `mapstructure:"client"`
+	Server   ServerConfig   `mapstructure:"server"`
+	Client   ClientConfig   `mapstructure:"client"`
+	Database DatabaseConfig `mapstructure:"database"`
 }
 
 type ServerConfig struct {
@@ -48,6 +49,10 @@ type ClientLimitConfig struct {
 	MaxRetries int           `mapstructure:"max_retries"`
 	RetryDelay time.Duration `mapstructure:"retry_delay"`
 	KeepAlive  bool          `mapstructure:"keep_alive"`
+}
+
+type DatabaseConfig struct {
+	Path string `mapstructure:"path"`
 }
 
 func Load(path string) (*Config, error) {

@@ -1,3 +1,9 @@
 package repository
 
-// Enterprise Business Rules
+import (
+	"github.com/arashalaei/go-clean-socket-architecture/internal/domain/entity"
+)
+
+type PersonRepositroy interface {
+	CreatePerson(person *entity.Person) uint
+}

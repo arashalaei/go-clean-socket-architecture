@@ -27,6 +27,12 @@ func main(cfg *config.Config) {
 		log.Fatal(err)
 	}
 
+	// db, err := store.NewSqlite(cfg.Database.Path)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// sc, _ := db.GetSchoolByID(1)
+	// fmt.Printf("%+v", sc)
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 

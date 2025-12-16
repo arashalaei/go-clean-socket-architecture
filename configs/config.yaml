@@ -26,3 +26,6 @@ client:
       max_retries: 3
       retry_delay: 1s
       keep_alive: true
+
+database:
+  path: "myDB.db"
