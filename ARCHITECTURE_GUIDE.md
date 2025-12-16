@@ -88,3 +88,6 @@ type Class struct {
 4. **Schema Evolution**: Add DB columns without breaking domain logic
 
 
+
+
+

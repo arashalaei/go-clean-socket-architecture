@@ -1,7 +1,5 @@
 package model
 
-import "gorm.io/gorm"
-
 type Role string
 
 const (
@@ -10,10 +8,14 @@ const (
 )
 
 type Person struct {
-	gorm.Model
+	ID   uint   `gorm:"primaryKey;autoIncrement"`
 	Name string `gorm:"type:varchar(255);not null"`
 	Role Role   `gorm:"not null;check: role IN ('student', 'teacher')"`
 
 	SchoolID *uint  `gorm:"index"`
 	School   School `gorm:"foreignKey:SchoolID"`
+}
+
+func (Person) TableName() string {
+	return "persons"
 }

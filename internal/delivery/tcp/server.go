@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/arashalaei/go-clean-socket-architecture/internal/delivery/tcp/dto"
+	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/school"
 )
 
 type IServer interface {
@@ -60,6 +61,9 @@ type server struct {
 	handlers    map[RequestType]RequestHandler
 	wg          sync.WaitGroup
 	mu          sync.RWMutex
+
+	// use cases
+	schoolUsecases *school.SchoolUsecases
 }
 
 type RequestHandler func(ctx context.Context, payload json.RawMessage) (interface{}, error)
@@ -104,6 +108,12 @@ func WithCfg(cfg SrvCfg) srvops {
 func WithLogger(l log.Logger) srvops {
 	return func(s *server) {
 		s.logger = &l
+	}
+}
+
+func WithSchoolUsecases(su school.SchoolUsecases) srvops {
+	return func(s *server) {
+		s.schoolUsecases = &su
 	}
 }
 

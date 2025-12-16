@@ -32,7 +32,7 @@ func (s *sqlit) GetSchoolByID(schoolId uint) (*entity.School, error) {
 func (s *sqlit) GetSchoolByName(schoolName string) (*entity.School, error) {
 	var school model.School
 
-	if err := s.db.Where("name = ?", school).First(&school).Error; err != nil {
+	if err := s.db.Where("name = ?", schoolName).First(&school).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("school not found: %w", err)
 		}

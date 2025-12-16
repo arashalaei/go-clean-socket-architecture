@@ -45,6 +45,8 @@ func NewSqlite(dbPath string) (IStore, error) {
 
 func migrate(db *gorm.DB) error {
 	return db.AutoMigrate(
+		&model.Person{},
 		&model.School{},
+		&model.Class{},
 	)
 }

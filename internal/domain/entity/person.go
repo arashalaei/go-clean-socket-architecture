@@ -13,5 +13,6 @@ type Person struct {
 	Id      uint
 	Name    string
 	Role    Role
+	School  School
 	Classes []uint
 }

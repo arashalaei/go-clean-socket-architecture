@@ -9,37 +9,45 @@ import (
 	"syscall"
 
 	"github.com/arashalaei/go-clean-socket-architecture/internal/delivery/tcp"
+	store "github.com/arashalaei/go-clean-socket-architecture/internal/repository/sqlite"
+	"github.com/arashalaei/go-clean-socket-architecture/internal/usecase/school"
 	"github.com/arashalaei/go-clean-socket-architecture/pkg/config"
 	"github.com/spf13/cobra"
 )
 
 func main(cfg *config.Config) {
 	printBanner()
+
+	// set up repos
+	db, err := store.NewSqlite(cfg.Database.Path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// school usecases
+	schoolUsecases := school.NewSchoolUseCases(
+		school.NewCreateSchoolUseCase(db),
+	)
+
 	server := tcp.NewServer(
 		tcp.WithCfg(mapToSrvCfg(&cfg.Server)),
+		tcp.WithSchoolUsecases(*schoolUsecases),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := server.Start(ctx)
+	err = server.Start(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// db, err := store.NewSqlite(cfg.Database.Path)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// sc, _ := db.GetSchoolByID(1)
-	// fmt.Printf("%+v", sc)
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	// Register handlers
+	server.RegisterHandler(tcp.CreateSchool, server.CreateSchoolHandler)
 	server.RegisterHandler(tcp.CreateClass, server.CreateClassHandler)
 	server.RegisterHandler(tcp.CreatePerson, server.CreatePersonHandler)
-	server.RegisterHandler(tcp.CreateSchool, server.CreateSchoolHandler)
 	server.RegisterHandler(tcp.WhoAmI, server.WhoAmIHandler)
 
 	<-stop

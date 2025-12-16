@@ -1,13 +1,17 @@
 package client
 
 import (
+	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/arashalaei/go-clean-socket-architecture/internal/delivery/tcp"
+	"github.com/arashalaei/go-clean-socket-architecture/internal/delivery/tcp/dto"
 	"github.com/arashalaei/go-clean-socket-architecture/pkg/config"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -27,30 +31,196 @@ func client(cfg *config.Config) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	prompt := promptui.Select{
-		Label: "Select An Action",
-		Items: []string{
-			"1. Create School",
-			"2. Create Class",
-			"3. Add Student To Class",
-			"4. Who Am I ?",
-		},
-	}
-
-	_, result, err := prompt.Run()
-
-	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
-		return
-	}
-
-	fmt.Printf("You choose %q\n", result)
+	// Run menu in a goroutine so we can handle shutdown signals
+	go func() {
+		runMainMenu(client)
+	}()
 
 	<-stop
 	log.Println("Closing signal received")
 	if err := client.Close(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func runMainMenu(client *tcp.Client) {
+	for {
+		prompt := promptui.Select{
+			Label: "Main Menu - Select Category",
+			Items: []string{
+				"1. School",
+				"2. Class",
+				"3. Person",
+				"4. Exit",
+			},
+		}
+
+		selected, _, err := prompt.Run()
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}
+
+		switch selected {
+		case 0:
+			runSchoolMenu(client)
+		case 1:
+			runClassMenu(client)
+		case 2:
+			runPersonMenu(client)
+		case 3:
+			fmt.Println("Exiting...")
+			return
+		default:
+			return
+		}
+	}
+}
+
+func runSchoolMenu(client *tcp.Client) {
+	for {
+		prompt := promptui.Select{
+			Label: "School Menu - Select Action",
+			Items: []string{
+				"1. Add New School",
+				"2. List All Schools",
+				"3. Back to Main Menu",
+			},
+		}
+
+		selected, _, err := prompt.Run()
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}
+
+		switch selected {
+		case 0:
+			handleCreateSchool(client)
+		case 1:
+			handleListSchools(client)
+		case 2:
+			return
+		default:
+			return
+		}
+	}
+}
+
+func runClassMenu(client *tcp.Client) {
+	for {
+		prompt := promptui.Select{
+			Label: "Class Menu - Select Action",
+			Items: []string{
+				"1. Add New Class",
+				"2. List All Classes",
+				"3. Add Student To Class",
+				"4. Back to Main Menu",
+			},
+		}
+
+		selected, _, err := prompt.Run()
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}
+
+		switch selected {
+		case 0:
+			handleCreateClass(client)
+		case 1:
+			handleListClasses(client)
+		case 2:
+			handleAddStudentToClass(client)
+		case 3:
+			return
+		default:
+			return
+		}
+	}
+}
+
+func runPersonMenu(client *tcp.Client) {
+	for {
+		prompt := promptui.Select{
+			Label: "Person Menu - Select Action",
+			Items: []string{
+				"1. Add New Person",
+				"2. List All Persons",
+				"3. Who Am I?",
+				"4. Back to Main Menu",
+			},
+		}
+
+		selected, _, err := prompt.Run()
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}
+
+		switch selected {
+		case 0:
+			handleCreatePerson(client)
+		case 1:
+			handleListPersons(client)
+		case 2:
+			handleWhoAmI(client)
+		case 3:
+			return
+		default:
+			return
+		}
+	}
+}
+
+func handleCreateSchool(client *tcp.Client) {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Enter the school name:")
+	scanner.Scan()
+	name := strings.TrimSpace(scanner.Text())
+	if name == "" {
+		fmt.Println("School name cannot be empty")
+		return
+	}
+
+	res, err := client.Send(
+		context.Background(),
+		tcp.CreateSchool,
+		dto.CreateSchoolReq{Name: name},
+	)
+	if err != nil {
+		fmt.Printf("Error creating school: %v\n", err)
+		return
+	}
+	fmt.Printf("School created successfully: %+v\n", res.Data)
+}
+
+func handleListSchools(client *tcp.Client) {
+	fmt.Println("not yet implemented")
+}
+
+func handleCreateClass(client *tcp.Client) {
+	fmt.Println("not yet implemented")
+}
+
+func handleListClasses(client *tcp.Client) {
+	fmt.Println("not yet implemented")
+}
+
+func handleAddStudentToClass(client *tcp.Client) {
+	fmt.Println("not yet implemented")
+}
+
+func handleCreatePerson(client *tcp.Client) {
+	fmt.Println("not yet implemented")
+}
+
+func handleListPersons(client *tcp.Client) {
+	fmt.Println("not yet implemented")
+}
+
+func handleWhoAmI(client *tcp.Client) {
+	fmt.Println("not yet implemented")
 }
 
 func mapToClientCfg(cfg *config.ClientConfig) tcp.ClientConfig {
